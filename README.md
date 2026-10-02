@@ -1,5 +1,9 @@
 # SI Unit Calculator
 
+[![tests](https://github.com/PeterHindes/si-calculator/actions/workflows/tests.yml/badge.svg)](https://github.com/PeterHindes/si-calculator/actions/workflows/tests.yml)
+[![pages](https://github.com/PeterHindes/si-calculator/actions/workflows/pages.yml/badge.svg)](https://peterhindes.github.io/si-calculator/)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A free-form calculator for science problems: type an expression with SI units and
 multiples, get a result with units.
 
@@ -103,6 +107,19 @@ They are unit aware where that makes sense: `sqrt(4m^2)` is `2 m`,
 `30°`, and `ln(5m)` is refused with an explanation rather than a wrong number.
 Trigonometry takes an angle (`sin(30deg)`, `sin(0.5rad)`); a bare number is
 read as radians.
+
+## Development
+
+The test suite runs in CI on every push and pull request against Node 20, 22 and
+24:
+
+```
+node tests/run-tests.js
+```
+
+## License
+
+MIT — see [LICENSE](LICENSE).
 
 ## Files
 
