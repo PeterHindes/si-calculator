@@ -155,6 +155,36 @@ that produces dimensions. Fuzzing enforces it.
 
 ---
 
+## 6b. Later still
+
+5. **"create a full wiki on the tool and log the intent trace from this chat for
+   future agents"** — eight pages under `wiki/`, kept in the repository as the
+   source of truth (a GitHub wiki is a separate repository, and its git remote
+   cannot be created headlessly — GitHub reserves the `.wiki` name and the API
+   needs a token scope the CLI does not have, so it needs one manual click before
+   it can be pushed to). The unit and function tables were drafted by a
+   subagent and every example in them machine-checked against the engine.
+6. **"add some physics constants like epsilon naight, with a focus on
+   electrican engineering"** — added `Z0`, `Y0`, `emratio`, `phi0`, `RK`, `KJ`,
+   `muB`, `alpha`, `lambda_c`, `echarge`; thermal `c2`, `bWien`, `triple`; and
+   material reference values `rho_cu`, `rho_al`, `rho_ag`, `sigma_cu`,
+   `eps_si`, `eps_al2o3`, `Eg_si`, explicitly labelled as approximate.
+   Two of my own dimension vectors were wrong (`muB` had a stray kilogram,
+   `emratio` a stray metre) and were caught by computing with them, not by
+   reading them. Material values are approximations at 20 °C and the wiki says
+   so.
+7. **"add a constants picker; with hotkeys for common ones"** — a grouped chips
+   strip, `Ctrl`/`⌘`+`K` opening a filterable palette over every constant and
+   function, and `Alt`/`⌥`+letter for the common ones. Letter keys already
+   owned by `Ctrl` (copy, paste, view-source, browser menus) are deliberately
+   unused so no shortcut is hijacked; the palette is the reliable path.
+8. **"the subagent might be going overboard"** — agreed, and the reference
+   pages were trimmed to tables plus a short orientation. The engine bugs that
+   the review surfaced were triaged rather than fixed wholesale: six were real
+   and fixed, the rest were documented as deliberate or cosmetic.
+
+---
+
 ## 7. Invariants a future change must not break
 
 1. `1m + 1s` stays an error. Relaxing dimension checking destroys the entire
@@ -169,6 +199,11 @@ that produces dimensions. Fuzzing enforces it.
 6. No dependencies, no build step. The page must work from `file://`.
 7. `evaluate()` never mutates a quantity it was given, and no cache may make a
    symbol resolve differently depending on evaluation history (§5).
+8. A constant added to `units.js` needs a **correct dimension vector**, verified
+   by using it in a real calculation rather than by reading it. Two of the
+   twenty added here were wrong on the first pass.
+9. Keyboard shortcuts must not take a key combination away from the browser or
+   the OS. The picker only claims `Alt`/`⌥`+letter.
 
 ---
 
