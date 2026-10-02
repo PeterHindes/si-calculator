@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SI calculator</title>
+<meta name="description" content="Free-form SI / unit calculator: type an expression with units, get a formatted result.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1>SI<span class="h1sub">calculator</span></h1>
+  <div class="tools">
+    <label class="sigwrap" for="sig">digits
+      <select id="sig" title="significant digits">
+        <option value="2">2</option>
+        <option value="4">4</option>
+        <option value="6">6</option>
+        <option value="8" selected>8</option>
+        <option value="12">12</option>
+      </select>
+    </label>
+    <button id="help-toggle" class="btn" type="button" aria-expanded="false"
+            aria-controls="help" title="unit reference and syntax (?)">?</button>
+  </div>
+</header>
+
+<main class="layout">
+
+  <section class="col main-col">
+    <div class="inputwrap">
+      <textarea id="input" class="input" rows="1" spellcheck="false" autocomplete="off"
+                autocorrect="off" autocapitalize="off" wrap="off"
+                aria-label="expression" placeholder="10um*10um/8.8e-12F/m"></textarea>
+      <div class="caretscroll" hidden><pre id="caret" class="caret" aria-hidden="true"></pre></div>
+    </div>
+    <p id="err-msg" class="err-msg" hidden></p>
+    <p id="err-hint" class="err-hint" hidden></p>
+
+    <div class="result" role="status" aria-live="polite">
+      <div class="result-row">
+        <div id="res-primary" class="res-primary"></div>
+        <button id="copy" class="btn ghost" type="button" title="copy the result">copy</button>
+      </div>
+      <div id="res-base" class="res-base" hidden></div>
+      <div id="res-note" class="res-note" hidden></div>
+    </div>
+
+    <h2 class="h2">examples</h2>
+    <div id="examples" class="chips"></div>
+
+    <p class="keyhelp">Enter evaluate &middot; Shift+Enter newline &middot; &uarr;/&darr; history
+      &middot; Esc clear &middot; ? help</p>
+  </section>
+
+  <aside class="col side">
+    <section class="panel">
+      <h2 class="h2">variables</h2>
+      <div class="varform">
+        <input id="var-name" class="vin" type="text" spellcheck="false" autocomplete="off"
+               autocapitalize="off" aria-label="variable name" placeholder="name">
+        <input id="var-expr" class="vin" type="text" spellcheck="false" autocomplete="off"
+               autocapitalize="off" aria-label="variable expression" placeholder="3.4mm">
+        <button id="var-add" class="btn" type="button">add</button>
+      </div>
+      <p id="var-msg" class="var-msg" hidden></p>
+      <div id="varlist" class="chips varchips"></div>
+    </section>
+
+    <section class="panel">
+      <h2 class="h2">
+        history
+        <button id="clear-history" class="btn tiny ghost" type="button">clear</button>
+      </h2>
+      <ol id="history" class="history"></ol>
+    </section>
+  </aside>
+
+</main>
+
+<div id="help" class="help" hidden>
+  <div class="help-inner" role="dialog" aria-modal="true" aria-label="unit reference">
+    <div class="help-head">
+      <h2>reference</h2>
+      <button id="help-close" class="btn" type="button">close</button>
+    </div>
+    <div id="help-body" class="help-body"></div>
+  </div>
+</div>
+
+<script src="units.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
