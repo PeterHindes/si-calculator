@@ -203,6 +203,19 @@ select:focus-visible, .vin:focus-visible { outline: 2px solid var(--accent); out
 }
 .res-primary:empty::after { content: "..."; letter-spacing: .18em; color: #3d4956; }
 
+/* the parsed equation: what was read, then what it came out as */
+.res-eq {
+  margin-top: 12px;
+  padding: 8px 11px;
+  border: 1px solid var(--line-soft);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, .22);
+  font: 14px/1.6 var(--mono);
+  color: var(--dim);
+  overflow-wrap: anywhere;
+}
+.res-eq b { color: var(--fg); font-weight: 600; }
+
 .res-base {
   margin-top: 10px;
   font: 15px/1.5 var(--mono);

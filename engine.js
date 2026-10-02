@@ -254,7 +254,7 @@
           throw CalcError('"' + m[0] + '" is out of range', i,
             'The largest number this calculator handles is about 1e308.');
         }
-        toks.push({ t: 'num', v: num, pos: i, end: i + m[0].length });
+        toks.push({ t: 'num', v: num, raw: m[0], pos: i, end: i + m[0].length });
         i += m[0].length;
         continue;
       }
@@ -417,7 +417,7 @@
 
       if (t.t === 'num' && t.pos === prevEnd && !(after && after.t === 'id')) {
         this.next();
-        node = { t: 'pow', a: node, b: { t: 'num', v: t.v, pos: t.pos }, pos: t.pos };
+        node = { t: 'pow', a: node, b: { t: 'num', v: t.v, raw: t.raw, pos: t.pos }, pos: t.pos };
         prevEnd = t.end;
         continue;
       }
@@ -444,7 +444,7 @@
 
   Parser.prototype.primary = function () {
     var t = this.next();
-    if (t.t === 'num') return { t: 'num', v: t.v, pos: t.pos };
+    if (t.t === 'num') return { t: 'num', v: t.v, raw: t.raw, pos: t.pos };
 
     if (t.t === 'lparen') {
       this.enter();
@@ -706,9 +706,108 @@
     return r;
   }
 
+  /* ============================ equation rendering ========================= */
+  /* Renders the parsed expression the way it was actually evaluated, so the
+     result can be shown as an equation instead of a bare number:
+        10um*10um/8.8e-12F/m   ->   10 µm · 10 µm ÷ 8.8 pF ÷ 1 m                        */
+
+  var PREC = { add: 1, sub: 1, mul: 2, mixed: 2, div: 2, pow: 4, atom: 5 };
+
+  function symText(n) {
+    if (n.varname) return n.varname;            /* a stored value shows its name */
+    if (n.q && n.q.h) return n.q.h.sym + (n.q.h.n && n.q.h.n !== 1 ? supString(n.q.h.n) : '');
+    return String(n.name);
+  }
+
+  function renderAtomNum(n) {
+    return n.raw != null ? n.raw : fmtNum(n.v, 8);   /* show the literal as typed */
+  }
+
+  /* "10 m" and "4 m²" read better than "10 · m" and "4 · m²" */
+  function isUnitish(n) {
+    if (n.t === 'sym') return !n.varname && !!(n.q && n.q.h);
+    if (n.t === 'pow') {                                          /* 4 m², 2 m⁻¹ */
+      var intExp = n.b.t === 'num' || (n.b.t === 'neg' && n.b.a.t === 'num');
+      return intExp && isUnitish(n.a);
+    }
+    return false;
+  }
+
+  function renderRaw(n) {
+    var s;
+    switch (n.t) {
+      case 'num':
+        return renderAtomNum(n);
+      case 'sym':
+        return symText(n);
+      case 'group':
+        s = render(n.a, 0);
+        return isAtomic(n.a) ? s : '(' + s + ')';
+      case 'fact':
+        return render(n.a, 5) + '!';
+      case 'neg':
+        return '−' + render(n.a, 2);
+      case 'pos':
+        return render(n.a, 4);
+      case 'pow': {
+        s = render(n.a, 5);
+        var e = n.b.t === 'num' ? n.b.v
+              : (n.b.t === 'neg' && n.b.a.t === 'num' ? -n.b.a.v : null);
+        if (e !== null && Number.isInteger(e) && Math.abs(e) <= 9 && e !== 1) {
+          return s + supString(e);
+        }
+        return s + '^' + render(n.b, 5);
+      }
+      case 'add':
+        return render(n.a, PREC.add) + ' + ' + render(n.b, PREC.add + 1);
+      case 'sub':
+        return render(n.a, PREC.sub) + ' − ' + render(n.b, PREC.sub + 1);
+      case 'div':
+        /* the right-hand side is always parenthesised when it is not a single
+           factor: "a ÷ (b · c)" can never be misread */
+        return render(n.a, PREC.div) + ' ÷ ' + render(n.b, 3);
+      case 'mul': {
+        var glue = (n.a.t === 'num' && isUnitish(n.b)) || (n.b.t === 'num' && isUnitish(n.a));
+        /* a division inside a product needs its brackets, or "a ÷ b · c" misreads */
+        var pa = (n.a.t === 'div') ? 3 : PREC.mul + (glue ? 1 : 0);
+        var pb = (n.b.t === 'div') ? 3 : PREC.mul + (glue ? 1 : 0);
+        return render(n.a, pa) + (glue ? ' ' : ' · ') + render(n.b, pb);
+      }
+      case 'mixed': {
+        /* 2h 30min was a sum; 1h 2m was a product — show which one happened */
+        var a = n.a.q, b = n.b.q;
+        var added = a && b && !dimsZero(a.d) && !dimsZero(b.d) && dimsEq(a.d, b.d);
+        if (!added) {
+          return render(n.a, n.a.t === 'div' ? 3 : PREC.mul) + ' · ' +
+                 render(n.b, n.b.t === 'div' ? 3 : PREC.mul);
+        }
+        return render(n.a, PREC.add) + ' + ' + render(n.b, PREC.add + 1);
+      }
+      case 'call': {
+        var args = n.args.map(function (a) { return render(a, 0); });
+        return FUNCS[n.name] ? n.name + '(' + args.join(', ') + ')'
+                             : '(' + args.join(', ') + ')';
+      }
+      default:
+        return '?';
+    }
+  }
+
+  function isAtomic(n) {
+    return PREC[n.t] === undefined || PREC[n.t] >= PREC.atom;
+  }
+
+  function render(n, parentPrec) {
+    var s = renderRaw(n);
+    var p = PREC[n.t] == null ? PREC.atom : PREC[n.t];
+    return (parentPrec && p < parentPrec) ? '(' + s + ')' : s;
+  }
+
+  function renderNode(n, q) { n.q = q; n.r = render(n, 0); return q; }
+
   /* ============================ evaluation ============================ */
 
-  function evalNode(n, ctx) {
+  function evalNodeInner(n, ctx) {
     try {
       switch (n.t) {
         case 'num': return new Q(n.v, ONE.slice(), 0, null);
@@ -722,7 +821,10 @@
         case 'pos': return evalNode(n.a, ctx);
         case 'pow': return qPow(evalNode(n.a, ctx), evalNode(n.b, ctx), n.pos);
         case 'fact': return outNum(factorial(needNum(evalNode(n.a, ctx), 'fact', n.pos), n.pos));
-        case 'sym': return resolveSymbol(n.name, ctx, n.pos);
+        case 'sym':
+          n.varname = (ctx && ctx.vars && Object.prototype.hasOwnProperty.call(ctx.vars, n.name))
+            ? n.name : null;
+          return resolveSymbol(n.name, ctx, n.pos);
         case 'call': {
           var fn = FUNCS[n.name];
           var args = n.args.map(function (a) { return evalNode(a, ctx); });
@@ -745,6 +847,14 @@
       if (err && err.calc && err.pos == null) err.pos = n.pos;
       throw err;
     }
+  }
+
+  /* Evaluate, and remember on every node both its value and its rendered text
+     so the caller can show the whole equation. */
+  function evalNode(n, ctx) {
+    var q = evalNodeInner(n, ctx);
+    if (!n.r) renderNode(n, q);
+    return q;
   }
 
   function resolveSymbol(name, ctx, pos) {
@@ -806,8 +916,10 @@
       var lhs = evaluate(to[1], ctx);
       if (lhs.q) {
         if (lhs.assignment) {                 /* "x = 5m to cm" still stores x */
-          return { q: lhs.q, assignment: lhs.assignment,
-                   conversion: convert(lhs.q, to[2], {}) };
+          return { q: lhs.q, ast: lhs.ast,
+                   eq: lhs.eq != null ? lhs.eq : (lhs.ast ? lhs.ast.r : null),
+                   assignment: lhs.assignment,
+                   conversion: convert(lhs.q, to[2], { sig: ctx.sig }) };
         }
         var rhs = evaluate(to[2], ctx);
         if (!rhs.q) throw CalcError('no unit after "to"', text.length - 1);
@@ -820,7 +932,8 @@
           throw CalcError('that conversion is out of range', to[1].length,
             'Try a unit closer to the value you are converting.');
         }
-        return { q: lhs.q, conversion: conv, assignment: null };
+        return { q: lhs.q, ast: lhs.ast, eq: lhs.eq != null ? lhs.eq : (lhs.ast ? lhs.ast.r : null),
+                 conversion: conv, assignment: null };
       }
     }
 
@@ -828,7 +941,8 @@
     var assign = ASSIGN_RE.exec(text);
     if (assign && !/^\s*=/.test(assign[3])) {
       var sub = evaluate(assign[3], ctx);
-      return { q: sub.q, assignment: { name: assign[1], value: sub.q, src: assign[3].trim() } };
+      return { q: sub.q, ast: sub.ast, eq: assign[1] + ' = ' + (sub.ast ? sub.ast.r : ''),
+               assignment: { name: assign[1], value: sub.q, src: assign[3].trim() } };
     }
 
     var toks = tokenize(text);
@@ -838,7 +952,7 @@
       throw CalcError('the result is not a finite number', 0,
         'Look for a division by zero, 0^0, or a value out of range.');
     }
-    return { q: res, assignment: null, conversion: null };
+    return { q: res, ast: ast, eq: ast.r, assignment: null, conversion: null };
   }
 
 
@@ -850,7 +964,7 @@
     if (!isFinite(x)) return x > 0 ? '∞' : '−∞';
     if (x === 0) return '0';
     var ax = Math.abs(x);
-    if (Number.isInteger(x) && ax < 1e15) return String(x);
+    if (Number.isInteger(x) && ax < 1e15) return String(x).replace(/^-/, '\u2212');
     var s;
     if (ax >= 1e15 || ax < 1e-5) {
       s = x.toExponential(Math.max(0, sig - 1));
@@ -860,7 +974,7 @@
       if (s.indexOf('.') >= 0) s = s.replace(/0+$/, '').replace(/\.$/, '');
       if (Number.isInteger(Number(s)) && Math.abs(Number(s)) < 1e15) s = String(Number(s));
     }
-    return s.replace('e+', 'e');
+    return s.replace('e+', 'e').replace(/^-/, '\u2212');   /* typographic minus */
   }
 
   function fmtFull(x) {

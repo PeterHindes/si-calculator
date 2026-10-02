@@ -18,7 +18,7 @@ sin(30deg)                 →  0.5
 Open `index.html` in a browser. There is no build step, no server and no
 dependency — the page runs straight from disk.
 
-To run the engine tests (200+ assertions, no dependencies):
+To run the engine tests (225 assertions, no dependencies):
 
 ```
 node tests/run-tests.js
@@ -117,6 +117,23 @@ read as radians.
 
 `engine.js` and `units.js` have no DOM dependency and work under Node, which is
 how the tests exercise them.
+
+## Seeing what was parsed
+
+Every result comes with the equation that produced it, so a surprising answer is
+always explainable:
+
+```
+9.81m/s^2 * 1.5s^2     (9.81 m ÷ s²) · 1.5 s² = 14.715 m
+2h 30min               2 h + 30 min = 2.5 h
+1h 2m                  1 h · 2 m = 7200 m·s
+10um*10um/8.8e-12F/m   10 µm · 10 µm ÷ (8.8e-12 F) ÷ m = 11.363636 m·F⁻¹
+```
+
+The renderer works from the evaluated syntax tree, so it shows what actually
+happened rather than a tidied-up version of what you typed: `2h 30min` is
+rendered as a sum and `1h 2m` as a product, because that is how each one was
+evaluated. Brackets appear wherever dropping them would change the meaning.
 
 ## How the engine works
 

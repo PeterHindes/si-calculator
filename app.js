@@ -22,6 +22,7 @@
   var errHint = $('err-hint');
   var resPrimary = $('res-primary');
   var resBase = $('res-base');
+  var resEq = $('res-eq');
   var resNote = $('res-note');
   var copyBtn = $('copy');
   var exBox = $('examples');
@@ -159,10 +160,16 @@
     var res = compute(ta.value);
     applyResult(res);
 
-    var primary = '', base = '', note = '';
+    var primary = '', base = '', note = '', eq = '';
     if (res.kind === 'ok') {
       primary = shownText(res.r);
       var f = fmt(res.q);
+      /* how the expression was actually read, next to what it came out as */
+      if (res.r.eq) {
+        /* the primary already is the converted value, and an assignment already
+           reads "name = value" — do not say it twice */
+        eq = (res.r.conversion || res.r.assignment) ? res.r.eq : res.r.eq + ' = ' + primary;
+      }
       if (res.r.conversion) {
         base = (f && f.siBase) || (res.r.conversion.dimSymbol !== '1' ? res.r.conversion.dimSymbol : '');
       } else if (f && f.siBase) {
@@ -178,6 +185,7 @@
 
     setText(resPrimary, primary);
     setText(resBase, base);
+    setText(resEq, eq);
     setText(resNote, note);
     copyBtn.hidden = !primary;
 

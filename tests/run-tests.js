@@ -96,7 +96,7 @@ t('mixed radix does not multiply angles', '2pi', '6.2831853');
 t('precedence', '2+3*4', '14');
 t('parens', '(2+3)*4', '20');
 t('power right assoc', '2^3^2', '512');
-t('unary minus vs power', '-2^2', '-4');
+t('unary minus vs power', '-2^2', '−4');
 t('negative exponent', '10^-3', '0.001');
 t('unary in exponent', '2^-2', '0.25');
 t('power with unit', '(3m)^2', '9 m²');
@@ -230,10 +230,34 @@ t('format base SI', '2h 30min', '9000 s', { si: true });
 t('very small picks femto', '1e-15 m', '1 fm');
 t('big integers get a prefix', '1234567m', '1.234567 Mm');
 t('zero', '0m', '0 m');
-t('negative', '-5m', '-5 m');
+t('negative', '-5m', '−5 m');
 t('angle keeps typed unit', '1rad', '1 rad');
 t('angle in degrees', '1rad to deg', '57.29577951 °', { conv: true });
 t('angle whole degrees', '1deg', '1 °');
+
+/* ---------------- rendered equation ---------------- */
+function eq_(expr, expected, opts) {
+  const got = SI.evaluate(expr, opts && opts.ctx).eq;
+  if (got === expected) pass++;
+  else { fail++; failures.push(`  ✗ equation: ${expr}\n      expected: ${expected}\n      got:      ${got}`); }
+}
+eq_('10um*10um/8.8e-12F/m', '10 µm · 10 µm ÷ (8.8e-12 F) ÷ m');
+eq_('10um*10um/(8.8e-12F/m)', '10 µm · 10 µm ÷ (8.8e-12 F ÷ m)');
+eq_('2h 30min', '2 h + 30 min');
+eq_('1h 2m', '1 h · 2 m');
+eq_('9.81m/s^2 * 1.5s^2', '(9.81 m ÷ s²) · 1.5 s²');
+eq_('(2+3)*4', '(2 + 3) · 4');
+eq_('1/2m', '1 ÷ (2 m)');
+eq_('-(2+3)*4', '−(2 + 3) · 4');
+eq_('10m^2', '10 m²');
+eq_('2m^-2', '2 m⁻²');
+eq_('sqrt(4m^2)', 'sqrt(4 m²)');
+eq_('5!', '5!');
+eq_('sin(30deg)', 'sin(30 °)');
+eq_('-5m', '−5 m');
+eq_('3.5cm+4mm', '3.5 cm + 4 mm');
+eq_('1e6', '1e6');
+eq_('1mol*1kJ/mol', '1 mol · 1 kJ ÷ mol');
 
 /* ---------------- documented syntax rules ---------------- */
 t('README: juxtaposition binds tighter than slash', '1/2m', '0.5 m⁻¹');
@@ -290,7 +314,7 @@ t('tiny conversion survives', '1fm to m', '1e-15 m', { conv: true });
 t('assignment survives a conversion', 'y = 5m to cm', '5 m', { ctx: { vars: {} } });
 t('offset unit divided by a number', '20degC/2', '10 °C');
 t('tonnes take prefixes', '1kt', '1 kt');
-t('sign of a quantity', 'sign(-5m)', '-1');
+t('sign of a quantity', 'sign(-5m)', '−1');
 t('dimensionless result has a base form', '1/3', '0.33333333', { si: true });
 t('conversion target must be a unit', '2 to 3', 'ERROR: "3" is not a unit');
 
