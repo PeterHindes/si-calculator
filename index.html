@@ -48,11 +48,15 @@
       <div id="res-note" class="res-note" hidden></div>
     </div>
 
+    <h2 class="h2">constants</h2>
+    <div id="const-chips" class="chips"></div>
+    <p class="keyhelp" id="keyhint"></p>
+
     <h2 class="h2">examples</h2>
     <div id="examples" class="chips"></div>
 
     <p class="keyhelp">Enter evaluate &middot; Shift+Enter newline &middot; &uarr;/&darr; history
-      &middot; Esc clear &middot; ? help</p>
+      &middot; Esc clear &middot; ? help &middot; Ctrl/&#8984;K constants palette</p>
   </section>
 
   <aside class="col side">
@@ -79,6 +83,14 @@
   </aside>
 
 </main>
+
+<div id="palette" class="palette" hidden>
+  <div class="palette-inner" role="dialog" aria-label="insert a constant or function">
+    <input id="pal-input" class="pal-input" type="text" spellcheck="false" autocomplete="off"
+           placeholder="filter constants and functions…" aria-label="filter">
+    <div id="pal-list" class="pal-list"></div>
+  </div>
+</div>
 
 <div id="help" class="help" hidden>
   <div class="help-inner" role="dialog" aria-modal="true" aria-label="unit reference">

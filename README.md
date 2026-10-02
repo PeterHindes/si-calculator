@@ -18,12 +18,18 @@ multiples, get a result with units.
 sin(30deg)                 →  0.5
 ```
 
+The page gives you live evaluation, the parsed equation behind every answer,
+history, stored variables, a **constants picker** (`Ctrl`/`⌘`+`K`, or
+`Alt`/`⌥`+letter for the common ones — `E` → `epsilon0`, `Z` → `Z0`,
+`R` → `rho_cu`, `M` → `muB`), and a click-to-insert reference sheet of every
+unit, function and constant.
+
 ## Running it
 
 Open `index.html` in a browser. There is no build step, no server and no
 dependency — the page runs straight from disk.
 
-To run the engine tests (225 assertions, no dependencies):
+To run the engine tests (260 assertions, no dependencies):
 
 ```
 node tests/run-tests.js
@@ -49,7 +55,7 @@ node tests/run-tests.js
 
 1. **Juxtaposition binds tighter than `*` and `/`.** The units that follow a
    slash belong to the divisor, which is what physics formulas mean:
-   `E/mc^2` is `E/(m·c²)`, `100km/2h` is `50 km/h`.
+   `1J/(me*c^2)` is not a product, `100km/2h` is `50 km/h`.
    The price is that `1/2m` means `1/(2·m) = 0.5 m⁻¹`. Write `(1/2)m`,
    `0.5m` or `1/2*m` for half a metre.
 2. **`^` attaches to the unit right before it**, never to a product:
@@ -108,6 +114,25 @@ They are unit aware where that makes sense: `sqrt(4m^2)` is `2 m`,
 `30°`, and `ln(5m)` is refused with an explanation rather than a wrong number.
 Trigonometry takes an angle (`sin(30deg)`, `sin(0.5rad)`); a bare number is
 read as radians.
+
+## Wiki
+
+Full documentation lives in [`wiki/`](wiki/) (mirrored to
+https://github.com/PeterHindes/si-calculator/wiki once that repo is
+initialised):
+
+| Page | What is in it |
+|---|---|
+| [Syntax](wiki/Syntax.md) | the expression language: precedence, juxtaposition, exponents, mixed radix |
+| [Units](wiki/Units.md) | every unit, by group, with prefixes and symbol collisions |
+| [Functions](wiki/Functions.md) | the built-ins and how each behaves with units |
+| [Constants](wiki/Constants.md) | physical constants and which names collide with units |
+| [Architecture](wiki/Architecture.md) | how the engine works |
+| [Development](wiki/Development.md) | tests, CI, and the invariants to preserve |
+| [Design decisions](wiki/Design-decisions.md) | why it behaves the way it does |
+
+[INTENT.md](INTENT.md) is the intent trace: what was asked for, what was decided,
+what was rejected and why, and what a future maintainer should not break.
 
 ## Development
 

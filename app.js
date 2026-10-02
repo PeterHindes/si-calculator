@@ -35,6 +35,10 @@
   var histBox = $('history');
   var clearHist = $('clear-history');
   var help = $('help');
+  var constBox = $('const-chips');
+  var palette = $('palette');
+  var palInput = $('pal-input');
+  var palList = $('pal-list');
   var helpToggle = $('help-toggle');
   var helpClose = $('help-close');
   var helpBody = $('help-body');
@@ -145,6 +149,120 @@
       varQs[a.name] = a.value;
       save();
       renderVars();
+    }
+  }
+
+  /* -------------------------------------------------- constants picker */
+
+  /* the ones worth a single keystroke, with the key that inserts each */
+  var CONST_GROUPS = [
+    { title: 'everyday', names: ['c', 'planck', 'k', 'NA', 'G', 'g0', 'pi', 'sigma'] },
+    { title: 'electrical', names: ['epsilon0', 'mu0', 'Z0', 'q', 'FF', 'phi0', 'RK', 'KJ', 'muB'] },
+    { title: 'thermal', names: ['c2', 'bWien', 'triple', 'Ry', 'a0', 'lambda_c'] },
+    { title: 'materials', names: ['rho_cu', 'rho_al', 'sigma_cu', 'eps_si', 'Eg_si'] }
+  ];
+
+  /* Alt (⌥ on macOS) plus a letter. Letters that browsers or editors already
+     claim — ctrl/cmd ones in particular — are deliberately left alone. */
+  var CONST_KEYS = {
+    e: 'epsilon0', c: 'c', p: 'pi', k: 'k', n: 'NA',
+    z: 'Z0', f: 'FF', q: 'q', g: 'g0', h: 'planck',
+    r: 'rho_cu', m: 'muB', t: 'triple', s: 'sigma', v: 'Z0', b: 'bWien'
+  };
+
+  function constByName(name) {
+    var list = (SI.HELP && SI.HELP.constants) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].name === name) return list[i];
+    return null;
+  }
+
+  function keyLabel(key) {
+    return (navigator.platform || '').indexOf('Mac') >= 0 ? '\u2325' : 'Alt+';
+  }
+
+  function renderConstants() {
+    if (!constBox) return;
+    var frag = document.createDocumentFragment();
+    CONST_GROUPS.forEach(function (grp) {
+      var label = el('span', 'chipgroup-label', grp.title);
+      frag.appendChild(label);
+      grp.names.forEach(function (name) {
+        var c = constByName(name);
+        if (!c) return;
+        var b = el('button', 'chip const', name);
+        b.type = 'button';
+        b.title = (c.desc || name) + '  \u2014  ' + c.dim +
+                  '  (' + SI.fmtNum(c.value, 6) + ')';
+        b.addEventListener('click', function () { insert(name); });
+        frag.appendChild(b);
+      });
+    });
+    constBox.textContent = '';
+    constBox.appendChild(frag);
+    renderKeyHint();
+  }
+
+  function renderKeyHint() {
+    var el2 = $('keyhint');
+    if (!el2) return;
+    var k = keyLabel('');
+    var pairs = [['E', 'epsilon0'], ['Z', 'Z0'], ['R', 'rho_cu'], ['M', 'muB']];
+    el2.textContent = pairs.map(function (p) { return k + p[0] + ' \u2192 ' + p[1]; }).join('   ');
+  }
+
+  /* ---- the palette: filter everything insertable and pick with Enter ---- */
+
+  var palIndex = null, palHits = [], palIdx = 0;
+
+  function buildIndex() {
+    if (palIndex) return palIndex;
+    palIndex = [];
+    ((SI.HELP && SI.HELP.constants) || []).forEach(function (c) {
+      palIndex.push({ kind: 'const', name: c.name, desc: c.desc, dim: c.dim, text: c.name + ' ' + (c.desc || '') });
+    });
+    ((SI.HELP && SI.HELP.funcs) || []).forEach(function (f) {
+      palIndex.push({ kind: 'func', name: f.name, desc: f.doc, text: f.name + ' ' + f.doc });
+    });
+    return palIndex;
+  }
+
+  function renderPalette() {
+    var q = palInput.value.trim().toLowerCase();
+    palHits = buildIndex().filter(function (it) {
+      return !q || it.name.toLowerCase().indexOf(q) >= 0 ||
+             (it.desc || '').toLowerCase().indexOf(q) >= 0;
+    }).slice(0, 60);
+    if (palIdx >= palHits.length) palIdx = 0;
+    palList.textContent = '';
+    palHits.forEach(function (hit, i) {
+      var row = el('button', 'pal-row' + (i === palIdx ? ' sel' : ''));
+      row.type = 'button';
+      row.appendChild(el('span', 'pal-name', hit.name));
+      row.appendChild(el('span', 'pal-desc', (hit.desc || '') + (hit.dim ? '  ' + hit.dim : '')));
+      row.addEventListener('click', function () { takePalette(i); });
+      row.addEventListener('mousemove', function () { palIdx = i; renderPalette(); });
+      palList.appendChild(row);
+    });
+    if (!palHits.length) palList.appendChild(el('div', 'pal-empty', 'nothing matches'));
+  }
+
+  function takePalette(i) {
+    var hit = palHits[i == null ? palIdx : i];
+    if (!hit) return;
+    openPalette(false);
+    insert(hit.kind === 'func' ? hit.name + '(' : hit.name, hit.kind === 'func' ? 1 : 0);
+  }
+
+  function openPalette(on) {
+    if (!palette) return;
+    palette.hidden = !on;
+    if (on) {
+      palInput.value = '';
+      palIdx = 0;
+      renderPalette();
+      palInput.focus();
+    } else {
+      ta.focus();
     }
   }
 
@@ -634,6 +752,17 @@
       renderVars();
     });
 
+    if (palInput) {
+      palInput.addEventListener('input', function () { palIdx = 0; renderPalette(); });
+      palInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { takePalette(); e.preventDefault(); return; }
+        if (e.key === 'Escape') { openPalette(false); e.preventDefault(); return; }
+        if (e.key === 'ArrowDown') { palIdx = Math.min(palIdx + 1, palHits.length - 1); renderPalette(); e.preventDefault(); return; }
+        if (e.key === 'ArrowUp') { palIdx = Math.max(palIdx - 1, 0); renderPalette(); e.preventDefault(); }
+      });
+      palette.addEventListener('click', function (e) { if (e.target === palette) openPalette(false); });
+    }
+
     helpToggle.addEventListener('click', function () { openHelp(!helpOpen()); });
     helpClose.addEventListener('click', function () { openHelp(false); ta.focus(); });
     help.addEventListener('click', function (e) { if (e.target === help) { openHelp(false); ta.focus(); } });
@@ -641,8 +770,27 @@
     document.addEventListener('keydown', function (e) {
       var t = e.target;
       var typing = t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT' || t.tagName === 'SELECT');
+
+      /* Ctrl/Cmd-K opens the constants palette from anywhere */
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === 'k' || e.key === 'K')) {
+        openPalette(palette.hidden); e.preventDefault(); return;
+      }
+
+      /* Alt (or Ctrl on macOS) plus a letter inserts a common constant */
+      /* Alt (or Ctrl on macOS) plus a letter inserts a common constant — but not
+         while the palette has the keyboard */
+      if (palette.hidden) {
+        var mac = (navigator.platform || '').indexOf('Mac') >= 0;
+        var mod = e.altKey || (mac && e.ctrlKey && !e.metaKey);
+        if (mod && !e.shiftKey && !e.metaKey && e.key.length === 1) {
+          var name = CONST_KEYS[e.key.toLowerCase()];
+          if (name && constByName(name)) { insert(name); e.preventDefault(); return; }
+        }
+      }
+
       if (e.key === '?' && !typing) { openHelp(!helpOpen()); e.preventDefault(); return; }
       if (e.key === 'Escape') {
+        if (!palette.hidden) { openPalette(false); e.preventDefault(); return; }
         if (helpOpen()) { openHelp(false); e.preventDefault(); return; }
         ta.value = '';
         histIdx = -1;
@@ -654,6 +802,7 @@
 
   function init() {
     sigSel.value = String(sig);
+    renderConstants();
     renderExamples();
     loadVars();
     renderVars();

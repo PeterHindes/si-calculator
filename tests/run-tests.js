@@ -235,6 +235,46 @@ t('angle keeps typed unit', '1rad', '1 rad');
 t('angle in degrees', '1rad to deg', '57.29577951 °', { conv: true });
 t('angle whole degrees', '1deg', '1 °');
 
+t('kilo-Calorie is not kilocoulomb times attolitre', '1kCal', '1 kCal');
+t('kilocalorie', '1kcal', '1 kcal');
+t('food Calorie', '1Cal', '1 Cal');
+t('kilo-Calorie in joules', '1kCal to J', '4184000 J', { conv: true });
+
+/* ---------------- fixes from the reference review ---------------- */
+tErr('arity error names the function', 'max()', 'max() takes');
+tErr('arity error on a two-argument function', 'hypot(3m)', 'hypot() takes');
+t('odd root of a negative number', 'root(-8,3)', '−2');
+t('even root of a negative number is refused', 'root(-8,2)', 'ERROR: root() of a negative number needs an odd integer n');
+t('pi is typeable', 'pi', '3.1415927');
+t('2pi', '2pi', '6.2831853');
+t('ASCII quote is an arcsecond', '1"', '1 "');
+t('carat is not centi-tonne', '1ct', '1 ct');
+t('viscosity times velocity', '1Pa_s*1m/s', '1 N/m');
+t('floor works on an offset unit', 'floor(20.7degC)', '293 K');
+
+/* ---------------- electrical engineering constants ---------------- */
+t('impedance of free space', 'Z0', '376.73031 Ω');
+t('admittance of free space is 1/Z0', '1/Z0', '2.6544187 mS');
+t('quarter-wave transformer', 'Z0/4', '94.182578 Ω');
+t('Josephson frequency at 1 volt', 'KJ*1V', '483.59785 THz');
+t('von Klitzing constant', 'RK', '25.812807 kΩ');
+t('magnetic flux quantum', '2*phi0', '4.1356677 fWb');
+t('Bohr magneton times one tesla', 'muB*1T to pJ', '9.274010078e-12 pJ', { conv: true });
+t('electron cyclotron frequency at 1 tesla', 'emratio*1T', '175.882 GHz');
+t('Compton wavelength', 'lambda_c', '2.4263102 pm');
+t('fine-structure constant', 'alpha', '0.0072973526');
+t('second radiation constant', 'c2', '0.014387769 m·K');
+t('Wien peak temperature at 500 nm', 'bWien/500nm', '5.7955439 kK');
+t('triple point of water', 'triple', '273.16 K');
+t('resistance of 1 m of 1 mm2 copper', 'rho_cu*1m/(1mm^2)', '16.8 mΩ');
+t('resistance of 1 m of 1 mm2 silver', 'rho_ag*1m/(1mm^2)', '15.9 mΩ');
+t('conductivity of copper', 'sigma_cu', '58 MS');
+t('silicon permittivity', 'eps_si*epsilon0', '1.03594e-10 F·m⁻¹');
+t('silicon band gap', 'Eg_si to eV', '1.119999357 eV', { conv: true });
+t('permeability and permittivity give c', '1/sqrt(epsilon0*mu0)', '299792460 m/s', { tol: 1e-8 });
+t('capacitance from permittivity and area', 'epsilon0*1m^2/(1mm)', '8.8541878 nF');
+t('magnetic energy density at 1 tesla', '1T^2/(2*mu0)', '397.88736 kPa', { tol: 1e-6 });
+
 /* ---------------- rendered equation ---------------- */
 function eq_(expr, expected, opts) {
   const got = SI.evaluate(expr, opts && opts.ctx).eq;

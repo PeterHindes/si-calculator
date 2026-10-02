@@ -125,7 +125,8 @@
   U('st', 6.35029318, M, { g: 'Imperial', si: false, d: 'st' });
   U('gr', 6.479891e-5, M, { g: 'Imperial', si: false, d: 'gr' });
   U('slug', 14.5939029372, M, { g: 'Imperial', si: false, d: 'slug' });
-  U('carat', 2e-4, M, { g: 'Mass', si: false, d: 'ct' });
+  U('ct', 2e-4, M, { p: false, g: 'Mass', si: false, d: 'ct' });
+  U('carat', 2e-4, M, { p: false, g: 'Mass', si: false, d: 'ct' });
 
   /* ---------- time ---------- */
   U('s', 1, T, { g: 'Time', pri: 0 });
@@ -191,6 +192,8 @@
   U('eV', 1.602176634e-19, ENERGY, { g: 'Energy', pri: 1 });
   U('cal', 4.184, ENERGY, { g: 'Energy', si: false, d: 'cal' });
   U('Cal', 4184, ENERGY, { p: false, g: 'Energy', si: false, d: 'Cal' });
+  /* without this, "kCal" falls apart into kilocoulomb x attolitre */
+  U('kCal', 4.184e6, ENERGY, { p: false, g: 'Energy', si: false, d: 'kCal' });
   U('btu', 1055.05585262, ENERGY, { g: 'Imperial', si: false, d: 'BTU' });
   U('Wh', 3600, ENERGY, { g: 'Energy', si: false, d: 'Wh' });
   U('erg', 1e-7, ENERGY, { g: 'Energy', si: false, d: 'erg' });
@@ -216,7 +219,7 @@
   U('J/mol', 1, D({ kg: 1, m: 2, s: -2, mol: -1 }), { p: false, g: 'Chemistry', si: false, d: 'J/mol' });
   U('kWh', 3.6e6, ENERGY, { p: false, g: 'Energy', si: false, d: 'kWh' });
   U('N/m', 1, D({ kg: 1, s: -2 }), { p: false, g: 'Mechanics', si: false, d: 'N/m' });
-  U('Pa_s', 1, PRESS, { p: false, g: 'Mechanics', si: false, d: 'Pa·s' });
+  U('Pa_s', 1, D({ kg: 1, m: -1, s: -1 }), { p: false, g: 'Mechanics', si: false, d: 'Pa·s' });
   U('W/m2', 1, SURFTENS, { p: false, g: 'Heat', si: false, d: 'W/m²' });
   U('mol/L', 1000, D({ mol: 1, m: -3 }), { p: false, g: 'Chemistry', si: false, d: 'mol/L' });
   U('m/s', 1, VELOC, { p: false, g: 'Speed', pri: 0, si: false, d: 'm/s' });
@@ -301,7 +304,36 @@
     C('FF', 96485.33212, D({ A: 1, s: 1, mol: -1 }), 'Faraday constant'),
     C('p0', 101325, PRESS, 'standard pressure'),
     C('zero', 0, ONE, 'zero'),
-    C('one', 1, ONE, 'one')
+    C('one', 1, ONE, 'one'),
+
+    /* ---- electrical engineering (CODATA 2018 values) ---- */
+    C('Z0', 376.730313668, RESIS, 'impedance of free space, µ0c'),
+    C('Zo', 376.730313668, RESIS, 'impedance of free space'),
+    C('Y0', 0.00265441872799, CONDU, 'admittance of free space, 1/Z0'),
+    C('echarge', 1.602176634e-19, CHARGE, 'elementary charge'),
+    C('emratio', 1.75882001076e11, D({ kg: -1, s: 1, A: 1 }), 'electron charge-to-mass ratio'),
+    C('phi0', 2.067833848e-15, MAGFLUX, 'magnetic flux quantum, h/2e'),
+    C('Phi0', 2.067833848e-15, MAGFLUX, 'magnetic flux quantum'),
+    C('RK', 25812.80745, RESIS, 'von Klitzing constant, h/e²'),
+    C('KJ', 483597.8484e9, D({ kg: -1, m: -2, s: 2, A: 1 }), 'Josephson constant, 2e/h'),
+    C('muB', 9.2740100783e-24, D({ m: 2, A: 1 }), 'Bohr magneton'),
+    C('mub', 9.2740100783e-24, D({ m: 2, A: 1 }), 'Bohr magneton'),
+    C('alpha', 7.2973525693e-3, ONE, 'fine-structure constant'),
+    C('lambda_c', 2.42631023538e-12, L, 'electron Compton wavelength'),
+
+    /* ---- thermal engineering ---- */
+    C('c2', 1.4387768775e-2, D({ m: 1, K: 1 }), 'second radiation constant, hc/k'),
+    C('bWien', 2.897771955e-3, D({ m: 1, K: 1 }), "Wien's displacement constant"),
+    C('triple', 273.16, K, 'triple point of water'),
+
+    /* ---- engineering reference values (approximate, at 20 °C) ---- */
+    C('rho_cu', 1.68e-8, D({ kg: 1, m: 3, s: -3, A: -2 }), 'resistivity of copper'),
+    C('rho_al', 2.65e-8, D({ kg: 1, m: 3, s: -3, A: -2 }), 'resistivity of aluminium'),
+    C('rho_ag', 1.59e-8, D({ kg: 1, m: 3, s: -3, A: -2 }), 'resistivity of silver'),
+    C('sigma_cu', 5.8e7, CONDU, 'conductivity of copper'),
+    C('eps_si', 11.7, ONE, 'relative permittivity of silicon'),
+    C('eps_al2o3', 9.0, ONE, 'relative permittivity of alumina ceramic'),
+    C('Eg_si', 1.7944368e-19, ENERGY, 'band gap of silicon (1.12 eV)')
   ];
 
   root.SI_UNITS = {

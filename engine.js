@@ -225,7 +225,7 @@
 
   /* ============================ tokenizer ============================ */
 
-  var ID_RE = /[A-Za-z_µμΩΩ°ÅÅ'′″]/;
+  var ID_RE = /[A-Za-z_µμΩΩ°ÅÅπ'′″]/;
   function isKnownWord(name) {
     return !!(FUNCS[name] || CONST_BY_NAME[name]);
   }
@@ -259,6 +259,7 @@
         continue;
       }
 
+      if (c === '"') { toks.push({ t: 'id', v: 'arcsec', pos: i, end: i + 1 }); i++; continue; }
       if (c === '℃') { toks.push({ t: 'id', v: 'degC', pos: i, end: i + 1 }); i++; continue; }
       if (c === '℉') { toks.push({ t: 'id', v: 'degF', pos: i, end: i + 1 }); i++; continue; }
 
@@ -535,8 +536,13 @@
         if (!dimsZero(x.d) && !Number.isInteger(k)) {
           throw CalcError('root() of ' + dimSymbol(x.d) + ' needs an integer n', pos);
         }
-        if (x.v < 0 && Number.isInteger(k) && Math.round(k) % 2 === 0) {
-          throw CalcError('root() of a negative number needs an odd integer n', pos);
+        if (x.v < 0) {
+          /* an odd integer root of a negative number is real; JS returns NaN */
+          if (!Number.isInteger(k) || Math.abs(Math.round(k)) % 2 === 0) {
+            throw CalcError('root() of a negative number needs an odd integer n', pos,
+              'For an even root use abs(x), or cbrt() for a cube root.');
+          }
+          return new Q(-Math.pow(-x.v, 1 / k), dimsScale(x.d, 1 / k), 0, null);
         }
         return new Q(Math.pow(x.v, 1 / k), dimsScale(x.d, 1 / k), 0, null);
       }
@@ -691,9 +697,9 @@
     }
   };
 
-  /* rounding keeps the unit: floor(2.7m) = 2 m */
+  /* Rounding keeps the unit: floor(2.7m) = 2 m.  Offset units are rounded on the
+     absolute scale (round(20.4degC) = 294 K), which is what round() already did. */
   function keepUnits(v, src, pos) {
-    if (src.o) throw CalcError('this function cannot take an offset unit (°C, °F)', pos);
     return new Q(v, src.d.slice(), 0, null);
   }
 
@@ -829,14 +835,12 @@
           var fn = FUNCS[n.name];
           var args = n.args.map(function (a) { return evalNode(a, ctx); });
           if (fn.arity) {
-            if (Array.isArray(fn.arity)) {
-              if (args.length < fn.arity[0] || args.length > fn.arity[1]) {
-                throw CalcError(fn.name + '() takes ' + fn.arity[0] +
-                  (fn.arity[1] > fn.arity[0] ? '–' + fn.arity[1] : '') + ' arguments, got ' + args.length, n.pos);
-              }
-            } else if (args.length !== fn.arity) {
-              throw CalcError(fn.name + '() takes ' + fn.arity + ' argument' +
-                (fn.arity > 1 ? 's' : '') + ', got ' + args.length, n.pos);
+            var lo = Array.isArray(fn.arity) ? fn.arity[0] : fn.arity;
+            var hi = Array.isArray(fn.arity) ? fn.arity[1] : fn.arity;
+            if (args.length < lo || args.length > hi) {
+              throw CalcError(n.name + '() takes ' + lo +
+                (hi > lo ? '–' + hi : '') + ' argument' + (hi > 1 ? 's' : '') +
+                ', got ' + args.length, n.pos);
             }
           }
           return fn.f(args, n.pos);
