@@ -268,6 +268,57 @@
   // 'yr'->'yr' etc. self-aliases are harmless but let's drop them
   Object.keys(ALIAS).forEach(function (k) { if (ALIAS[k] === k) delete ALIAS[k]; });
 
+  /* ---------- English names, for tooltips ---------- */
+  /* Keyed by the symbol the calculator prints, because that is what a reader
+     is looking at. Symbols that need it most are the ones the symbol alone does
+     not give away: c, g, K, t, N, J, W, Ω. */
+  var EN = {
+    '1': '', '%': 'percent', 'ppm': 'parts per million', 'ppb': 'parts per billion',
+    m: 'metre', 'Å': 'ångström', 'Å': 'ångström', nmi: 'nautical mile',
+    fathom: 'fathom', b: 'barn', barn: 'barn',
+    in: 'inch', ft: 'foot', yd: 'yard', mi: 'mile', thou: 'thou',
+    lb: 'pound', oz: 'ounce', st: 'stone', gr: 'grain', slug: 'slug',
+    acre: 'acre', gal: 'gallon', qt: 'quart', pt: 'pint', 'fl oz': 'fluid ounce',
+    cup: 'cup', BTU: 'British thermal unit', psi: 'pound per square inch',
+    lbf: 'pound-force', mph: 'mile per hour',
+    au: 'astronomical unit', ly: 'light-year', pc: 'parsec',
+    g: 'gram', kg: 'kilogram', t: 'tonne', tonne: 'tonne', u: 'atomic mass unit',
+    Da: 'dalton', ct: 'carat', carat: 'carat',
+    s: 'second', min: 'minute', h: 'hour', d: 'day', wk: 'week', yr: 'year', month: 'month',
+    K: 'kelvin', '°C': 'degree Celsius', '°F': 'degree Fahrenheit', '°R': 'degree Rankine',
+    A: 'ampere', C: 'coulomb', V: 'volt', F: 'farad', 'Ω': 'ohm', S: 'siemens', Ah: 'ampere-hour',
+    mol: 'mole', cd: 'candela', lm: 'lumen', lx: 'lux',
+    rad: 'radian', '°': 'degree', grad: 'gradian', "'": 'arcminute', '"': 'arcsecond',
+    rev: 'revolution', sr: 'steradian',
+    Hz: 'hertz', Cps: 'cycles per second', rpm: 'revolutions per minute',
+    N: 'newton', dyn: 'dyne', kgf: 'kilogram-force',
+    Pa: 'pascal', atm: 'standard atmosphere', bar: 'bar', mbar: 'millibar',
+    Torr: 'torr', mmHg: 'millimetre of mercury', inHg: 'inch of mercury',
+    W: 'watt', J: 'joule', eV: 'electronvolt', cal: 'calorie', Cal: 'Calorie', kCal: 'kilo-Calorie',
+    Wh: 'watt-hour', kWh: 'kilowatt-hour', erg: 'erg', hp: 'horsepower',
+    Wb: 'weber', T: 'tesla', H: 'henry',
+    Bq: 'becquerel', Gy: 'gray', Sv: 'sievert',
+    kat: 'katal', 'J/mol': 'joule per mole', 'mol/L': 'mole per litre', 'g/m²': 'gram per square metre',
+    a: 'are', ha: 'hectare', 'm²': 'square metre',
+    L: 'litre', l: 'litre', 'm³': 'cubic metre',
+    'J/K': 'joule per kelvin', 'N/m': 'newton per metre', 'Pa·s': 'pascal second',
+    'W/m²': 'watt per square metre', 'm/s': 'metre per second', 'm/s²': 'metre per second squared',
+    'km/h': 'kilometre per hour', kn: 'knot',
+    'g/cm³': 'gram per cubic centimetre', 'kg/m³': 'kilogram per cubic metre',
+    B: 'byte', bit: 'bit', bel: 'bel', KB: 'kilobyte', MB: 'megabyte', GB: 'gigabyte', TB: 'terabyte',
+    degC: 'degree Celsius', degF: 'degree Fahrenheit', degR: 'degree Rankine',
+    deg: 'degree', arcmin: 'arcminute', arcsec: 'arcsecond',
+    'm2': 'square metre', 'm3': 'cubic metre',
+    'J/K_': 'joule per kelvin', 'Pa_s': 'pascal second'
+  };
+
+  var EN_PREFIX = {
+    Y: 'yotta', Z: 'zetta', E: 'exa', P: 'peta', T: 'tera', G: 'giga', M: 'mega', k: 'kilo',
+    h: 'hecto', da: 'deca', d: 'deci', c: 'centi', m: 'milli', 'µ': 'micro', 'μ': 'micro',
+    u: 'micro', n: 'nano', p: 'pico', f: 'femto', a: 'atto', z: 'zepto', y: 'yocto',
+    Ki: 'kibi', Mi: 'mebi', Gi: 'gibi', Ti: 'tebi', Pi: 'pebi', Ei: 'exbi', Zi: 'zebi', Yi: 'yobi'
+  };
+
   /* ---------- physical constants ---------- */
   function C(name, v, dims, desc) {
     return { name: name, v: v, d: dims || ONE, desc: desc || '' };
@@ -337,7 +388,7 @@
   ];
 
   root.SI_UNITS = {
-    DIMS: DIMS, IDX: IDX, D: D,
+    DIMS: DIMS, IDX: IDX, D: D, EN: EN, EN_PREFIX: EN_PREFIX,
     PREFIXES: PREFIXES, UNITS: UNITS, ORDER: ORDER, ALIAS: ALIAS,
     CONSTANTS: CONSTANTS,
     dims: { ONE: ONE, L: L, M: M, T: T, I: I, K: K, N: N, CD: CD, RAD: RAD }

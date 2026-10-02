@@ -141,6 +141,19 @@ an angle that comes out as a whole number of degrees is shown that way —
 * `1/0`, `1e999` and `m^1e308 * m^1e308` are refused with an explanation rather
   than producing `Infinity`.
 
+## What the units are called
+
+The page spells out what every unit means, in two places:
+
+* **while you type** — a line under the input names the unit under the caret,
+  so `3.5cm` shows *cm = centimetre · length* before you have finished;
+* **on hover** — point at the result, the equation or the SI-base line and a
+  tooltip gives the unit in words: `megajoule · energy`,
+  `cubic metre per farad`, `kilogram times metre squared per second squared`.
+
+Neither covers the input or the result: the hint is in the text flow and the
+tooltip follows the pointer.
+
 ## The equation line
 
 Every result is shown as the equation that produced it, rendered from the parsed

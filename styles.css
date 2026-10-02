@@ -490,3 +490,30 @@ select:focus-visible, .vin:focus-visible { outline: 2px solid var(--accent); out
 .pal-name { flex: 0 0 8.5em; color: var(--accent); }
 .pal-desc { flex: 1; overflow-wrap: anywhere; }
 .pal-empty { padding: 14px 16px; color: var(--faint); font: 13px var(--mono); }
+
+/* ---------- unit explanations ---------- */
+
+.unit-hint {
+  margin: 8px 0 0;
+  font: 13px/1.5 var(--mono);
+  color: var(--accent);
+  overflow-wrap: anywhere;
+  min-height: 1em;
+}
+.unit-hint[hidden] { display: none; }
+
+.tip {
+  position: fixed;
+  z-index: 60;
+  max-width: 340px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #0e141a;
+  color: var(--fg);
+  font: 12.5px/1.5 var(--mono);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  overflow-wrap: anywhere;
+}
+.tip[hidden] { display: none; }

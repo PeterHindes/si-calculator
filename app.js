@@ -36,6 +36,8 @@
   var clearHist = $('clear-history');
   var help = $('help');
   var constBox = $('const-chips');
+  var unitHint = $('unit-hint');
+  var tip = $('tip');
   var palette = $('palette');
   var palInput = $('pal-input');
   var palList = $('pal-list');
@@ -150,6 +152,58 @@
       save();
       renderVars();
     }
+  }
+
+  /* -------------------------------------------------- unit explanations */
+
+  /* a one-line description of a printed unit, e.g. "kilowatt (power)" */
+  function unitTip(unit, dims) {
+    if (!unit || unit === '1') return 'dimensionless — no units';
+    var words = SI.explainUnit(unit);
+    var kind = SI.dimKind(dims);
+    var base = SI.dimSymbol(dims);
+    var tail = kind ? kind : (base && base !== '1' ? 'SI base ' + base : '');
+    return words + (tail ? '  ·  ' + tail : '');
+  }
+
+  function attachTip(node, get) {
+    if (!node || !tip) return;
+    node.addEventListener('mousemove', function (e) {
+      var text = get();
+      if (!text) { tip.hidden = true; return; }
+      tip.textContent = text;
+      tip.hidden = false;
+      var w = tip.offsetWidth, h = tip.offsetHeight;
+      var x = e.clientX + 16, y = e.clientY + 18;
+      if (x + w > window.innerWidth - 8) x = e.clientX - w - 12;
+      if (y + h > window.innerHeight - 8) y = e.clientY - h - 12;
+      tip.style.left = Math.max(8, x) + 'px';
+      tip.style.top = Math.max(8, y) + 'px';
+    });
+    node.addEventListener('mouseleave', function () { tip.hidden = true; });
+  }
+
+  /* the unit under the caret, so the name is visible while typing it */
+  function showUnitHint() {
+    if (!unitHint) return;
+    var text = '';
+    var upto = ta.value.slice(0, ta.selectionStart || 0);
+    var m = /([A-Za-zµμΩ°π'][A-Za-z0-9_µμΩ°π']*)$/.exec(upto);
+    if (m && m[1].length >= 1) {
+      var r = SI.resolve(m[1], 0);
+      if (r && r.u) {
+        var sym = (r.pre ? r.pre.s : '') + r.u.sym;
+        var extra = r.o ? ' — has a zero point, so it is an absolute scale' : '';
+        text = m[1] + '  =  ' + unitTip(sym, r.d) + extra;
+      } else if (r && r.c) {
+        text = m[1] + '  =  ' + (r.c.desc || 'constant') +
+               '  ·  ' + SI.dimSymbol(r.c.d);
+      } else if (m[1].length > 1) {
+        text = m[1] + ' is not a unit or constant';
+      }
+    }
+    unitHint.textContent = text;
+    unitHint.hidden = !text;
   }
 
   /* -------------------------------------------------- constants picker */
@@ -301,6 +355,7 @@
       primary = '';
     }
 
+    showUnitHint();
     setText(resPrimary, primary);
     setText(resBase, base);
     setText(resEq, eq);
@@ -707,6 +762,9 @@
 
   function wire() {
     ta.addEventListener('input', function () { histIdx = -1; autoGrow(); renderSoon(); });
+    ['click', 'keyup', 'select'].forEach(function (ev) {
+      ta.addEventListener(ev, function () { setTimeout(showUnitHint, 0); });
+    });
     ta.addEventListener('scroll', function () { caretScroll.scrollLeft = ta.scrollLeft; });
     ta.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') {
@@ -762,6 +820,25 @@
       });
       palette.addEventListener('click', function (e) { if (e.target === palette) openPalette(false); });
     }
+
+    attachTip(resPrimary, function () {
+      var res = compute(ta.value);
+      if (res.kind !== 'ok') return '';
+      var f = fmt(res.q);
+      return f ? unitTip(f.unit, res.q.d) : '';
+    });
+    attachTip(resBase, function () {
+      var res = compute(ta.value);
+      if (res.kind !== 'ok') return '';
+      return res.q ? unitTip(SI.dimSymbol(res.q.d), res.q.d) : '';
+    });
+    attachTip(resEq, function () {
+      var res = compute(ta.value);
+      if (res.kind !== 'ok') return '';
+      var f = fmt(res.q);
+      return f ? unitTip(f.unit, res.q.d) : '';
+    });
+    attachTip(unitHint, function () { return unitHint.textContent ? null : ''; });
 
     helpToggle.addEventListener('click', function () { openHelp(!helpOpen()); });
     helpClose.addEventListener('click', function () { openHelp(false); ta.focus(); });

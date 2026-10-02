@@ -712,6 +712,99 @@
     return r;
   }
 
+  /* ============================ explaining a unit ========================= */
+  /* Turns a printed unit symbol into words, for the hover tip:
+       "kW"      ->  kilowatt
+       "m³·F⁻¹"  ->  cubic metre per farad
+       "m/s"     ->  metre per second
+       "kg·m²·s⁻³" -> kilogram times metre squared per second cubed           */
+
+  var EN = U.EN, EN_PREFIX = U.EN_PREFIX;
+  var SUP_NUM = { '⁰': 0, '¹': 1, '²': 2, '³': 3, '⁴': 4, '⁵': 5, '⁶': 6, '⁷': 7, '⁸': 8, '⁹': 9 };
+
+  /* superscript exponents become caret exponents: "m⁻¹" -> "m^-1" */
+  function supToCaret(t) {
+    var out = '', i = 0, caret = false;
+    while (i < t.length) {
+      var ch = t[i];
+      if (ch === '⁻') { out += '^-'; caret = true; i++; continue; }
+      if (SUP_NUM[ch] != null) { out += (caret ? '' : '^') + SUP_NUM[ch]; caret = false; i++; continue; }
+      out += ch; caret = false; i++;
+    }
+    return out;
+  }
+
+  function unitEntryBySymbol(sym) {
+    var hit = null;
+    for (var i = 0; i < U.ORDER.length; i++) {
+      if (U.ORDER[i].sym === sym && (!hit || U.ORDER[i].pri < hit.pri)) hit = U.ORDER[i];
+    }
+    return hit;
+  }
+
+  /* the English name of one printed symbol, splitting a prefix when that is it */
+  function symbolName(sym) {
+    if (EN[sym]) return EN[sym];
+    var keys = Object.keys(EN_PREFIX).sort(function (a, b) { return b.length - a.length; });
+    for (var i = 0; i < keys.length; i++) {
+      var pk = keys[i];
+      if (sym.length > pk.length && sym.indexOf(pk) === 0) {
+        var entry = unitEntryBySymbol(sym.slice(pk.length));
+        if (entry) return EN_PREFIX[pk] + (EN[entry.sym] || entry.sym);
+      }
+    }
+    var e2 = unitEntryBySymbol(sym);
+    return e2 ? (EN[e2.sym] || e2.sym) : sym;
+  }
+
+  function powerPhrase(name, exp) {
+    if (exp === 1) return name;
+    if (exp === 2 || exp === 3) return name + (exp === 2 ? ' squared' : ' cubed');
+    return name + ' to the power ' + exp;
+  }
+
+  /* a whole symbol the table already knows — "Pa·s", "m/s", "W/m²" — wins */
+  function explainUnit(text, dims) {
+    if (text == null) return '';
+    var whole = supToCaret(String(text)).trim();
+    if (!whole || whole === '1') return 'dimensionless';
+
+    var known = unitEntryBySymbol(String(text));
+    if (known && EN[known.sym]) return EN[known.sym];
+
+    var terms = [], sign = 1, re = /([^·/]+)([·/]?)/g, m;
+    while ((m = re.exec(whole)) !== null) {
+      var mm = /^(.+?)\^(-?\d+)$/.exec(m[1]);
+      terms.push({ sym: mm ? mm[1] : m[1], exp: (mm ? parseInt(mm[2], 10) : 1) * sign });
+      if (m[2] === '/') sign = -sign;
+      else if (m[2] === '·') sign = 1;
+    }
+
+    var pos = [], neg = [];
+    terms.forEach(function (t) {
+      var phrase = powerPhrase(symbolName(t.sym), Math.abs(t.exp));
+      (t.exp < 0 ? neg : pos).push(phrase);
+    });
+
+    var out = pos.join(' times ');
+    if (neg.length) out += (out ? ' per ' : 'per ') + joinPer(neg);
+    if (dims && dims === 'auto') dims = null;
+    return out || 'dimensionless';
+  }
+
+  function joinPer(list) {
+    if (list.length <= 1) return list[0] || '';
+    return list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1];
+  }
+
+  /* the dimension in words when there is one people use ("speed", "energy") */
+  function dimKind(d) {
+    if (!d || dimsZero(d)) return '';
+    var list = pickUnits(d);
+    if (!list.length) return '';
+    return list[0].g.toLowerCase();
+  }
+
   /* ============================ equation rendering ========================= */
   /* Renders the parsed expression the way it was actually evaluated, so the
      result can be shown as an equation instead of a bare number:
@@ -1333,6 +1426,10 @@
     FUNCS: FUNCS,
     CalcError: CalcError,
     clearCache: function () { clearUnitCache(); PICK_CACHE = {}; COMPOSE_CACHE = {}; },
+    explainUnit: explainUnit,
+    unitName: symbolName,
+    dimKind: dimKind,
+    unitAt: unitEntryBySymbol,
     /* introspection helpers (used by the test suite) */
     tokens: tokenize,
     compose: function (d) { return composeUnits(d); },

@@ -18,6 +18,11 @@ multiples, get a result with units.
 sin(30deg)                 →  0.5
 ```
 
+Every unit is named on screen as you type it, and hovering a result explains
+its units: `2kW*3h` → hover → *megajoule · energy*; type `3.5cm` → *cm =
+centimetre · length*. The hint sits under the input and the hover tip follows
+the pointer, so neither covers what you are reading.
+
 The page gives you live evaluation, the parsed equation behind every answer,
 history, stored variables, a **constants picker** (`Ctrl`/`⌘`+`K`, or
 `Alt`/`⌥`+letter for the common ones — `E` → `epsilon0`, `Z` → `Z0`,
