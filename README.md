@@ -1,8 +1,9 @@
 # SI Unit Calculator
 
 [![tests](https://github.com/PeterHindes/si-calculator/actions/workflows/tests.yml/badge.svg)](https://github.com/PeterHindes/si-calculator/actions/workflows/tests.yml)
-[![pages](https://github.com/PeterHindes/si-calculator/actions/workflows/pages.yml/badge.svg)](https://peterhindes.github.io/si-calculator/)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+Live at **https://peterhindes.github.io/si-calculator/**
 
 A free-form calculator for science problems: type an expression with SI units and
 multiples, get a result with units.
